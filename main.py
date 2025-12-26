@@ -4,6 +4,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox
 
+UNLOCK = True
 
 def select_files():
     """Opens a file dialog for the user to select multiple PDF files to merge.
@@ -11,13 +12,10 @@ def select_files():
     objects and calls merge_pdf with the Path list.
     """
     pdf_files = filedialog.askopenfilenames(
-        title= "PDF merger - from files",
+        title= "PDF unlocker - from files",
         filetypes= [("PDF files", "*.pdf")],
         initialdir= Path(__file__).parent
     )
-    if len(pdf_files) == 1:
-        messagebox.showerror("Error", "Please select at least 2 PDF files.")
-        return None
     
     if not pdf_files:
         return None
@@ -33,7 +31,7 @@ def select_folder():
     paths to Path objects and calls merge_pdf with the Path list.
     """
     folder = filedialog.askdirectory(
-        title= "PDF merger - from folder",
+        title= "PDF unlocker - from folder",
         initialdir= Path(__file__).parent,
     )
     if not folder:
@@ -48,13 +46,6 @@ def select_folder():
         messagebox.showerror("Error", "No PDF in selected folder.")
         return None
     
-    if len(pdf_names) == 1:
-        messagebox.showerror(
-            "Error",
-            "Please select a folder with at least 2 PDF files."
-        )
-        return None
-    
     pdf_paths = [Path(folder) / f for f in pdf_names]
     pdf_paths.sort()
     unlock_pdf(pdf_paths)
@@ -67,17 +58,22 @@ def unlock_pdf(pdf_paths : list[Path]):
     root = tk.Tk()
     root.withdraw()
     
-    cwd = Path(__file__).parent
-    
     print(f"Unlocking PDFs...")
     
     for pdf in pdf_paths:
+        
+        if UNLOCK:
+            process = f"Unblock-File -Path '{pdf}'"
+        else:
+            process = f"Set-Content -Path '{pdf}:Zone.Identifier' -Value '[ZoneTransfer]`nZoneId=3'"
+        
         subprocess.run([
             "powershell",
             "-Command",
-            f"Unblock-File -Path '{pdf}'"
+            process
             ])
-        print(f"{pdf.name} unlocked.")
+        
+        print(f"{pdf.name} done.")
     
     print(f"Unlocked done for {len(pdf_paths)} PDFs.")
 
